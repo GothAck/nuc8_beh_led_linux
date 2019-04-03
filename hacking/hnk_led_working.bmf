@@ -1,0 +1,626 @@
+Class 0:
+  Name=WMIEvent
+  Superclassname=__ExtrinsicEvent
+  Classflags=0
+  Namespace=\\.\root\wmi
+Class 1:
+  Name=CISD_Package
+  Superclassname=(null)
+  Classflags=0
+  Namespace=\\.\root\wmi
+  Qualifier 0:
+    Name=WMI
+    Tosubclass=FALSE
+    Type=Boolean
+    Value=TRUE
+  Qualifier 1:
+    Name=Locale
+    Tosubclass=FALSE
+    Type=String
+    Value=MS\0x409
+  Qualifier 2:
+    Name=Description
+    Tosubclass=FALSE
+    Type=String
+    Value=This class contains the definition of the package used in other classes
+  Qualifier 3:
+    Name=guid
+    Tosubclass=FALSE
+    Type=String
+    Value={53FAF357-C2BE-44f3-AF46-7A7A6AA9ADAE}
+  Variable 0:
+    Name=Bytes
+    Type=Basic:uint8[256]
+    Qualifier 0:
+      Name=WmiDataId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=1
+    Qualifier 1:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=256 bytes of data
+Class 2:
+  Name=CISD_WMI
+  Superclassname=(null)
+  Classflags=0
+  Namespace=\\.\root\wmi
+  Qualifier 0:
+    Name=WMI
+    Tosubclass=FALSE
+    Type=Boolean
+    Value=TRUE
+  Qualifier 1:
+    Name=Dynamic
+    Tosubclass=FALSE
+    Type=Boolean
+    Value=TRUE
+  Qualifier 2:
+    Name=Provider
+    Tosubclass=FALSE
+    Type=String
+    Value=WmiProv
+  Qualifier 3:
+    Name=Locale
+    Tosubclass=FALSE
+    Type=String
+    Value=MS\0x409
+  Qualifier 4:
+    Name=Description
+    Tosubclass=FALSE
+    Type=String
+    Value=CISD WMI - EC
+  Qualifier 5:
+    Name=guid
+    Tosubclass=FALSE
+    Type=String
+    Value={8C5DA44C-CDC3-46b3-8619-4E26D34390B7}
+  Variable 0:
+    Name=InstanceName
+    Type=Basic:String
+    Qualifier 0:
+      Name=key
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 1:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+  Variable 1:
+    Name=Active
+    Type=Basic:Boolean
+    Qualifier 0:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+  Method 0:
+    Name=GetState
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=1
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 1:
+    Name=SetState
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=2
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 2:
+    Name=QueryLed
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=3
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 3:
+    Name=NewGetLedStatus
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=4
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 4:
+    Name=SetIndicatorOptionLedType
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=5
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 5:
+    Name=SetValueIndicatorOptionLedType
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=6
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 6:
+    Name=AppNotify
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=7
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 7:
+    Name=GetHdmiAddr4Cec
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=513
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 8:
+    Name=GetEdid4Cec
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=514
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 9:
+    Name=GetUsbPowerState
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=769
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
+  Method 10:
+    Name=SetUsbPowerState
+    Qualifier 0:
+      Name=WmiMethodId
+      Tosubclass=FALSE
+      Type=Numeric
+      Value=770
+    Qualifier 1:
+      Name=Implemented
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 2:
+      Name=read
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 3:
+      Name=write
+      Tosubclass=FALSE
+      Type=Boolean
+      Value=TRUE
+    Qualifier 4:
+      Name=Description
+      Tosubclass=FALSE
+      Type=String
+      Value=Return the contents of a package
+    Return value:
+      Type=Void
+    Parameter 0:
+      Direction=in
+      Name=Cmd
+      Type=Basic:uint32
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Command
+    Parameter 1:
+      Direction=out
+      Name=Data
+      Type=Object:CISD_Package
+      Qualifier 0:
+        Name=Description
+        Tosubclass=FALSE
+        Type=String
+        Value=Package Data
