@@ -68,6 +68,7 @@ enum nuc_status {
 };
 
 struct nuc_led_interface {
+  u8 index;
   enum nuc_status status;
   void __iomem *S;
   void __iomem *BN;

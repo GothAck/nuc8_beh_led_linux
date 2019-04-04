@@ -125,15 +125,23 @@ inline int nuc_led_get_interface(int index, struct nuc_led_interface *iface) {
   return 0;
 }
 
+static int nuc_led_get_interface_cdev(struct led_classdev *led_cdev, struct nuc_led_interface *iface) {
+  int led = nuc_led_get_index(led_cdev);
+  iface->index = led;
+  return nuc_led_get_interface(led, iface);
+}
+
+static int nuc_led_get_interface_dev(struct device *dev, struct nuc_led_interface *iface) {
+  struct led_classdev *led_cdev = dev_get_drvdata(dev);
+  return nuc_led_get_interface_cdev(led_cdev, iface);
+}
+
 static void nuc_led_class_brightness_set(
   struct led_classdev *led_cdev,
   enum led_brightness value
 ) {
-  int led = nuc_led_get_index(led_cdev);
-  if (led < 0)
-    return;
   struct nuc_led_interface iface;
-  if (nuc_led_get_interface(led, &iface)) {
+  if (nuc_led_get_interface_cdev(led_cdev, &iface)) {
     return;
   }
   writeb(value, iface.BN);
@@ -142,10 +150,8 @@ static void nuc_led_class_brightness_set(
 static enum led_brightness nuc_led_class_brightness_get(struct led_classdev *led_cdev)
 {
   u8 value = 0;
-  int led = nuc_led_get_index(led_cdev);
-
   struct nuc_led_interface iface;
-  if (nuc_led_get_interface(led, &iface)) {
+  if (nuc_led_get_interface_cdev(led_cdev, &iface)) {
     return 0;
   }
   value = readb(iface.BN);
@@ -155,22 +161,11 @@ static enum led_brightness nuc_led_class_brightness_get(struct led_classdev *led
 static ssize_t nuc_led_state_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
-  struct led_classdev *led_cdev = dev_get_drvdata(dev);
-  u8 index = 0;
-  int led = nuc_led_get_index(led_cdev);
-  switch(led) {
-    case 0:
-      index = readb(MEM_PTR_OFFSET(BTNS));
-      break;
-    case 1:
-      index = readb(MEM_PTR_OFFSET(RNGS));
-      break;
-    case 2:
-      index = readb(MEM_PTR_OFFSET(OBLS));
-      break;
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface_dev(dev, &iface)) {
+    return -EIO;
   }
-  index -= 1;
-
+  int index = iface.status - 1;
   return sprintf(
     buf,
     "%s%s%s %s%s%s %s%s%s\n",
@@ -181,49 +176,39 @@ static ssize_t nuc_led_state_store(struct device *dev,
                                    struct device_attribute *attr,
                                    const char *buf, size_t size)
 {
-  u8 i;
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface_dev(dev, &iface)) {
+    return -EIO;
+  }
   int set = -1;
-  struct led_classdev *led_cdev = dev_get_drvdata(dev);
-  int led = nuc_led_get_index(led_cdev);
+  u8 i;
   for (i = 0; i < NUM_STATES; i++) {
     if (strncmp(states[i], buf, strlen(states[i])) == 0) {
       set = i + 1;
       break;
     }
   }
-  if (set > 0)
-    switch(led) {
-      case 0:
-        writeb(set, MEM_PTR_OFFSET(BTNS));
-        break;
-      case 1:
-        writeb(set, MEM_PTR_OFFSET(RNGS));
-        break;
-      case 2:
-        writeb(set, MEM_PTR_OFFSET(OBLS));
-        break;
-    }
+  if (set <= 0) return -EIO;
+  writeb(set, iface.S);
   return size;
 }
 
 static ssize_t nuc_led_color_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
-  struct led_classdev *led_cdev = dev_get_drvdata(dev);
-  int led = nuc_led_get_index(led_cdev);
   struct nuc_led_interface iface;
-  if (nuc_led_get_interface(led, &iface)) {
+  if (nuc_led_get_interface_dev(dev, &iface)) {
     return -EIO;
   }
   const u8 color = readb(iface.CR);
   u8 i;
   size_t off = 0;
   for (i = 0; i < NUM_COLORS; i++) {
-    if (!colors[led][i]) break;
+    if (!colors[iface.index][i]) break;
     off += sprintf(
       buf + off,
       "%s%s%s ",
-      WRAP_STR(color, i, colors[led]));
+      WRAP_STR(color, i, colors[iface.index]));
   }
   buf[off - 1] = '\n';
   return off;
@@ -233,18 +218,16 @@ static ssize_t nuc_led_color_store(struct device *dev,
                                    struct device_attribute *attr,
                                    const char *buf, size_t size)
 {
-  u8 i;
-  int set = -1;
-  struct led_classdev *led_cdev = dev_get_drvdata(dev);
-  int led = nuc_led_get_index(led_cdev);
   struct nuc_led_interface iface;
-  if (nuc_led_get_interface(led, &iface)) {
+  if (nuc_led_get_interface_dev(dev, &iface)) {
     return -EIO;
   }
   const u8 color = readb(iface.CR);
+  int set = -1;
+  u8 i;
   for (i = 0; i < NUM_COLORS; i++) {
-    if (!colors[led][i]) break;
-    if (strncmp(colors[led][i], buf, strlen(colors[led][i])) == 0) {
+    if (!colors[iface.index][i]) break;
+    if (strncmp(colors[iface.index][i], buf, strlen(colors[iface.index][i])) == 0) {
       set = i;
       break;
     }
@@ -259,13 +242,10 @@ static ssize_t nuc_led_color_store(struct device *dev,
 static ssize_t nuc_led_debug_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
-  struct led_classdev *led_cdev = dev_get_drvdata(dev);
-  int led = nuc_led_get_index(led_cdev);
   struct nuc_led_interface iface;
-  if (nuc_led_get_interface(led, &iface)) {
+  if (nuc_led_get_interface_dev(dev, &iface)) {
     return -EIO;
   }
-  const u8 color = readb(iface.CR);
   return sprintf(
     buf,
     "S: %x\n"
@@ -285,10 +265,8 @@ static ssize_t nuc_led_debug_store(struct device *dev,
                                    struct device_attribute *attr,
                                    const char *buf, size_t size)
 {
-  struct led_classdev *led_cdev = dev_get_drvdata(dev);
-  int led = nuc_led_get_index(led_cdev);
   struct nuc_led_interface iface;
-  if (nuc_led_get_interface(led, &iface)) {
+  if (nuc_led_get_interface_dev(dev, &iface)) {
     return -EIO;
   }
   printk(KERN_WARNING "%s %s\n", __func__, buf);
