@@ -245,12 +245,54 @@ static ssize_t nuc_led_color_store(struct device *dev,
   return -EIO;
 }
 
+static ssize_t nuc_led_debug_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+  struct led_classdev *led_cdev = dev_get_drvdata(dev);
+  int led = nuc_led_get_index(led_cdev);
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface(led, &iface)) {
+    return -EIO;
+  }
+  const u8 color = readb(iface.CR);
+  return sprintf(
+    buf,
+    "status: %x\n"
+    "BN: %x\n"
+    "BH: %x\n"
+    "FQ: %x\n"
+    "CR: %x\n",
+    iface.status,
+    iface.BN ? readb(iface.BN) : 0,
+    iface.BH ? readb(iface.BH) : 0,
+    iface.FQ ? readb(iface.FQ) : 0,
+    iface.CR ? readb(iface.CR) : 0
+  );
+}
+
+static ssize_t nuc_led_debug_store(struct device *dev,
+                                   struct device_attribute *attr,
+                                   const char *buf, size_t size)
+{
+  u8 i;
+  int set = -1;
+  struct led_classdev *led_cdev = dev_get_drvdata(dev);
+  int led = nuc_led_get_index(led_cdev);
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface(led, &iface)) {
+    return -EIO;
+  }
+  return -EIO;
+}
+
 static DEVICE_ATTR(state, 0644, nuc_led_state_show, nuc_led_state_store);
 static DEVICE_ATTR(color, 0644, nuc_led_color_show, nuc_led_color_store);
+static DEVICE_ATTR(debug, 0644, nuc_led_debug_show, nuc_led_debug_store);
 
 static struct attribute *nuc_led_attrs[] = {
         &dev_attr_state.attr,
         &dev_attr_color.attr,
+        &dev_attr_debug.attr,
         NULL
 };
 
