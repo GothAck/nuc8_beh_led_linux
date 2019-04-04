@@ -5,6 +5,10 @@
 #define ACPI_H2RA ((void *)0xFE410500)
 #define ACPI_H2RL 0x100
 
+#define NUM_LEDS 3
+#define NUM_STATES 3
+#define NUM_COLORS 9
+
 #define WRAP_STR(INDEX_VAR, INDEX, STR_VAR) \
   INDEX_VAR == INDEX ? "[" : "", STR_VAR[INDEX], INDEX_VAR == INDEX ? "]" : ""
 
@@ -65,6 +69,7 @@ enum nuc_status {
 
 struct nuc_led_interface {
   enum nuc_status status;
+  void __iomem *S;
   void __iomem *BN;
   void __iomem *BH;
   void __iomem *FQ;

@@ -27,13 +27,21 @@
 
 static struct platform_device *pdev;
 
-static const char* states[] = {
+const char *debug_keys[] = {
+  "S",
+  "BN",
+  "BH",
+  "FQ",
+  "CR",
+};
+
+static const char *states[NUM_STATES] = {
   "power",
   "hdd",
   "sw",
 };
 
-static const char *colors[3][9] = {
+static const char *colors[NUM_LEDS][NUM_COLORS] = {
   {"off", "blue", "amber", NULL, NULL, NULL, NULL, NULL, NULL, },
   {"off", "blue", "red", "green", "orange", "yellow", "purple", "pink", "white"},
   {"off", "blue", "red", "green", "orange", "yellow", "purple", "pink", "white"},
@@ -41,11 +49,11 @@ static const char *colors[3][9] = {
 
 static void __iomem *mem_ptr = NULL;
 
-static struct led_classdev nuc_leds[3];
+static struct led_classdev nuc_leds[NUM_LEDS];
 
 inline int nuc_led_get_index(struct led_classdev *led_cdev) {
   u8 i;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < NUM_LEDS; i++) {
     if (nuc_leds[i].name == led_cdev->name)
       return i;
   }
@@ -56,7 +64,8 @@ inline int nuc_led_get_interface(int index, struct nuc_led_interface *iface) {
   void __iomem *ptr = NULL;
   switch(index) {
     case 0:
-      iface->status = readb(MEM_PTR_OFFSET(BTNS));
+      iface->S = MEM_PTR_OFFSET(BTNS);
+      iface->status = readb(iface->S);
       switch(iface->status) {
         case NUC_LED_PW:
           ptr = MEM_PTR_OFFSET(B0);
@@ -70,7 +79,8 @@ inline int nuc_led_get_interface(int index, struct nuc_led_interface *iface) {
       }
       break;
     case 1:
-      iface->status = readb(MEM_PTR_OFFSET(RNGS));
+      iface->S = MEM_PTR_OFFSET(RNGS);
+      iface->status = readb(iface->S);
       switch(iface->status) {
         case NUC_LED_PW:
           ptr = MEM_PTR_OFFSET(R0);
@@ -84,7 +94,8 @@ inline int nuc_led_get_interface(int index, struct nuc_led_interface *iface) {
       }
       break;
     case 2:
-      iface->status = readb(MEM_PTR_OFFSET(OBLS));
+      iface->S = MEM_PTR_OFFSET(OBLS);
+      iface->status = readb(iface->S);
       switch(iface->status) {
         case NUC_LED_PW:
           ptr = MEM_PTR_OFFSET(O0);
@@ -116,7 +127,7 @@ inline int nuc_led_get_interface(int index, struct nuc_led_interface *iface) {
 
 static void nuc_led_class_brightness_set(
   struct led_classdev *led_cdev,
-	enum led_brightness value
+  enum led_brightness value
 ) {
   int led = nuc_led_get_index(led_cdev);
   if (led < 0)
@@ -174,7 +185,7 @@ static ssize_t nuc_led_state_store(struct device *dev,
   int set = -1;
   struct led_classdev *led_cdev = dev_get_drvdata(dev);
   int led = nuc_led_get_index(led_cdev);
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < NUM_STATES; i++) {
     if (strncmp(states[i], buf, strlen(states[i])) == 0) {
       set = i + 1;
       break;
@@ -207,7 +218,7 @@ static ssize_t nuc_led_color_show(struct device *dev,
   const u8 color = readb(iface.CR);
   u8 i;
   size_t off = 0;
-  for (i = 0; i < 9; i++) {
+  for (i = 0; i < NUM_COLORS; i++) {
     if (!colors[led][i]) break;
     off += sprintf(
       buf + off,
@@ -231,7 +242,7 @@ static ssize_t nuc_led_color_store(struct device *dev,
     return -EIO;
   }
   const u8 color = readb(iface.CR);
-  for (i = 0; i < 9; i++) {
+  for (i = 0; i < NUM_COLORS; i++) {
     if (!colors[led][i]) break;
     if (strncmp(colors[led][i], buf, strlen(colors[led][i])) == 0) {
       set = i;
@@ -257,7 +268,7 @@ static ssize_t nuc_led_debug_show(struct device *dev,
   const u8 color = readb(iface.CR);
   return sprintf(
     buf,
-    "status: %x\n"
+    "S: %x\n"
     "BN: %x\n"
     "BH: %x\n"
     "FQ: %x\n"
@@ -274,14 +285,59 @@ static ssize_t nuc_led_debug_store(struct device *dev,
                                    struct device_attribute *attr,
                                    const char *buf, size_t size)
 {
-  u8 i;
-  int set = -1;
   struct led_classdev *led_cdev = dev_get_drvdata(dev);
   int led = nuc_led_get_index(led_cdev);
   struct nuc_led_interface iface;
   if (nuc_led_get_interface(led, &iface)) {
     return -EIO;
   }
+  printk(KERN_WARNING "%s %s\n", __func__, buf);
+  const char *bufcpy = kmalloc(size + 1, GFP_KERNEL);
+  strcpy(bufcpy, buf);
+  char *bufptr = bufcpy;
+
+  char key[3] = {0, 0, 0};
+  char *tok = strsep(&bufptr, "=");
+  u8 i = 0;
+  unsigned int valint;
+  int writes = 0;
+  while (tok) {
+    if (!i) {
+      strncpy(key, tok, 2);
+      tok = strsep(&bufptr, " ");
+    } else {
+      kstrtouint(tok, 16, &valint);
+      printk(KERN_WARNING "%s key %s value %x\n", __func__, key, valint);
+      switch(match_string(debug_keys, 5, key)) {
+        case 0:
+          if (iface.S) writeb(valint, iface.S);
+          writes++;
+          break;
+        case 1:
+          if (iface.BN) writeb(valint, iface.BN);
+          writes++;
+          break;
+        case 2:
+          if (iface.BH) writeb(valint, iface.BH);
+          writes++;
+          break;
+        case 3:
+          if (iface.FQ) writeb(valint, iface.FQ);
+          writes++;
+          break;
+        case 4:
+          if (iface.CR) writeb(valint, iface.CR);
+          writes++;
+          break;
+      }
+      tok = strsep(&bufptr, "=");
+    }
+    i = !i;
+  }
+
+  kfree(bufcpy);
+
+  if (writes) return size;
   return -EIO;
 }
 
@@ -298,27 +354,30 @@ static struct attribute *nuc_led_attrs[] = {
 
 ATTRIBUTE_GROUPS(nuc_led);
 
-static struct led_classdev nuc_leds[3] = {
+static struct led_classdev nuc_leds[NUM_LEDS] = {
   {
-   	.name		= "nuc::btns",
+    .name		= "nuc::btns",
     .groups = nuc_led_groups,
-   	.brightness_set	= nuc_led_class_brightness_set,
+    .brightness_set	= nuc_led_class_brightness_set,
     .brightness_get = nuc_led_class_brightness_get,
-   	.flags		= LED_CORE_SUSPENDRESUME,
+    .max_brightness = 100,
+    .flags		= LED_RETAIN_AT_SHUTDOWN,
   },
   {
    .name		= "nuc::rngs",
    .groups = nuc_led_groups,
    .brightness_set	= nuc_led_class_brightness_set,
    .brightness_get = nuc_led_class_brightness_get,
-   .flags		= LED_CORE_SUSPENDRESUME,
+   .max_brightness = 100,
+   .flags		= LED_RETAIN_AT_SHUTDOWN,
   },
   {
    .name		= "nuc::obls",
    .groups = nuc_led_groups,
    .brightness_set	= nuc_led_class_brightness_set,
    .brightness_get = nuc_led_class_brightness_get,
-   .flags		= LED_CORE_SUSPENDRESUME,
+   .max_brightness = 100,
+   .flags		= LED_RETAIN_AT_SHUTDOWN,
   }
 };
 
@@ -340,19 +399,19 @@ static int nuc_led_class_probe(struct platform_device *pdev)
 }
 
 static struct platform_driver nuc_led_class_driver = {
-	.probe		= nuc_led_class_probe,
-	.driver		= {
-		.name		= DRVNAME,
-	},
+  .probe		= nuc_led_class_probe,
+  .driver		= {
+  .name		= DRVNAME,
+  },
 };
 
 static int __init nuc_led_class_init(void)
 {
-	int ret = -ENODEV;
-	if (!wmi_has_guid(NUCLED_WMI_MGMT_GUID)) {
-		ret = -ENODEV;
-		goto out;
-	}
+  int ret = -ENODEV;
+  if (!wmi_has_guid(NUCLED_WMI_MGMT_GUID)) {
+  ret = -ENODEV;
+  goto out;
+  }
 
   mem_ptr = ioremap_nocache((void *)ACPI_H2RA, ACPI_H2RL);
 
@@ -360,28 +419,28 @@ static int __init nuc_led_class_init(void)
     return -EIO;
   }
 
-	ret = platform_driver_register(&nuc_led_class_driver);
-	if (ret < 0) {
+  ret = platform_driver_register(&nuc_led_class_driver);
+  if (ret < 0) {
     // iounmap(mem_ptr);
     return -ENODEV;
   }
 
-	pdev = platform_device_register_simple(DRVNAME, -1, NULL, 0);
-	if (IS_ERR(pdev)) {
-		ret = PTR_ERR(pdev);
-		platform_driver_unregister(&nuc_led_class_driver);
+  pdev = platform_device_register_simple(DRVNAME, -1, NULL, 0);
+  if (IS_ERR(pdev)) {
+  ret = PTR_ERR(pdev);
+  platform_driver_unregister(&nuc_led_class_driver);
     // iounmap(mem_ptr);
     return ret;
   }
 
 out:
-	return ret;
+  return ret;
 }
 
 static void __exit nuc_led_class_exit(void)
 {
-	platform_device_unregister(pdev);
-	platform_driver_unregister(&nuc_led_class_driver);
+  platform_device_unregister(pdev);
+  platform_driver_unregister(&nuc_led_class_driver);
   // iounmap(mem_ptr);
 }
 
