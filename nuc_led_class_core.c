@@ -101,7 +101,6 @@ inline int nuc_led_get_interface(int index, struct nuc_led_interface *iface) {
   if (!ptr) return -1;
 
   if (iface->status != NUC_LED_HD) {
-    printk(KERN_WARNING "%s offsetof(%x)\n", __func__, offsetof(struct E2HR_led_normal, BH));
     iface->BN = ptr + offsetof(struct E2HR_led_normal, BN);
     iface->BH = ptr + offsetof(struct E2HR_led_normal, BH);
     iface->FQ = ptr + offsetof(struct E2HR_led_normal, FQ);
@@ -120,15 +119,12 @@ static void nuc_led_class_brightness_set(
 	enum led_brightness value
 ) {
   int led = nuc_led_get_index(led_cdev);
-  printk(KERN_WARNING "%s %x\n", __func__, led);
   if (led < 0)
     return;
   struct nuc_led_interface iface;
   if (nuc_led_get_interface(led, &iface)) {
-    printk(KERN_WARNING "%s Could not init interfaec\n", __func__);
     return;
   }
-  printk(KERN_WARNING "%s %p\n", __func__, iface.BN);
   writeb(value, iface.BN);
 }
 
@@ -136,15 +132,12 @@ static enum led_brightness nuc_led_class_brightness_get(struct led_classdev *led
 {
   u8 value = 0;
   int led = nuc_led_get_index(led_cdev);
-  printk(KERN_WARNING "%s %x\n", __func__, led);
+
   struct nuc_led_interface iface;
   if (nuc_led_get_interface(led, &iface)) {
-    printk(KERN_WARNING "%s Could not init interfaec\n", __func__);
     return 0;
   }
-  printk(KERN_WARNING "%s %p\n", __func__, iface.BN);
   value = readb(iface.BN);
-  printk(KERN_WARNING "%s %x\n", __func__, value);
   return value;
 }
 
@@ -166,7 +159,6 @@ static ssize_t nuc_led_state_show(struct device *dev,
       break;
   }
   index -= 1;
-  printk(KERN_WARNING "%s led %d index %d\n", __func__, led, index);
 
   return sprintf(
     buf,
@@ -183,14 +175,11 @@ static ssize_t nuc_led_state_store(struct device *dev,
   struct led_classdev *led_cdev = dev_get_drvdata(dev);
   int led = nuc_led_get_index(led_cdev);
   for (i = 0; i < 3; i++) {
-    printk(KERN_WARNING "%s state %s buf %s\n", __func__, states[i], buf);
-    printk(KERN_WARNING "%s state %d buf %d\n", __func__, strlen(states[i]), strlen(buf));
     if (strncmp(states[i], buf, strlen(states[i])) == 0) {
       set = i + 1;
       break;
     }
   }
-  printk(KERN_WARNING "%s led %d index %d\n", __func__, led, set);
   if (set > 0)
     switch(led) {
       case 0:
@@ -213,7 +202,6 @@ static ssize_t nuc_led_color_show(struct device *dev,
   int led = nuc_led_get_index(led_cdev);
   struct nuc_led_interface iface;
   if (nuc_led_get_interface(led, &iface)) {
-    printk(KERN_WARNING "%s Could not init interfaec\n", __func__);
     return -EIO;
   }
   const u8 color = readb(iface.CR);
@@ -226,7 +214,6 @@ static ssize_t nuc_led_color_show(struct device *dev,
       "%s%s%s ",
       WRAP_STR(color, i, colors[led]));
   }
-  printk(KERN_WARNING "%s led %d index %d\n", __func__, led, color);
   buf[off - 1] = '\n';
   return off;
 }
@@ -241,14 +228,11 @@ static ssize_t nuc_led_color_store(struct device *dev,
   int led = nuc_led_get_index(led_cdev);
   struct nuc_led_interface iface;
   if (nuc_led_get_interface(led, &iface)) {
-    printk(KERN_WARNING "%s Could not init interfaec\n", __func__);
     return -EIO;
   }
   const u8 color = readb(iface.CR);
   for (i = 0; i < 9; i++) {
     if (!colors[led][i]) break;
-    printk(KERN_WARNING "%s state %s buf %s\n", __func__, colors[led][i], buf);
-    printk(KERN_WARNING "%s state %d buf %d\n", __func__, strlen(colors[led][i]), strlen(buf));
     if (strncmp(colors[led][i], buf, strlen(colors[led][i])) == 0) {
       set = i;
       break;
@@ -300,9 +284,6 @@ static int nuc_led_class_probe(struct platform_device *pdev)
 {
   u8 i;
   int ret;
-
-  printk(KERN_WARNING "nuc_led_class probe\n");
-
   for (i = 0; i < (sizeof(nuc_leds) / sizeof(struct led_classdev)); i++) {
     ret = devm_led_classdev_register(&pdev->dev, &nuc_leds[i]);
     if (ret) {
@@ -326,25 +307,14 @@ static struct platform_driver nuc_led_class_driver = {
 static int __init nuc_led_class_init(void)
 {
 	int ret = -ENODEV;
-  printk(KERN_WARNING "nuc_led_class init %x\n", sizeof(struct E2HR));
-  printk(KERN_WARNING "nuc_led_class init %x %x\n", offsetof(struct E2HR, offset1), offsetof(struct E2HR, BTNS));
-  printk(KERN_WARNING "nuc_led_class init %x %x\n", offsetof(struct E2HR, offset2), offsetof(struct E2HR, B0.BN));
-  printk(KERN_WARNING "nuc_led_class init %x %x\n", offsetof(struct E2HR, offset3), offsetof(struct E2HR, R0.BN));
-  printk(KERN_WARNING "nuc_led_class init %x %x\n", offsetof(struct E2HR, offset4), offsetof(struct E2HR, O0.BN));
-  printk(KERN_WARNING "nuc_led_class init %x %x\n", offsetof(struct E2HR, offset5), offsetof(struct E2HR, OH.BN));
-
 	if (!wmi_has_guid(NUCLED_WMI_MGMT_GUID)) {
 		ret = -ENODEV;
 		goto out;
 	}
 
   mem_ptr = ioremap_nocache((void *)ACPI_H2RA, ACPI_H2RL);
-  printk(KERN_WARNING "nuc_led_class ioremap_nocache(%p) = %p\n", (void *)ACPI_H2RA, mem_ptr);
-  printk(KERN_WARNING "nuc_led_class BTNS = %x\n", offsetof(struct E2HR, BTNS));
-  printk(KERN_WARNING "nuc_led_class BTNS = %p\n", MEM_PTR_OFFSET(BTNS));
 
   if (!mem_ptr) {
-    printk(KERN_WARNING "nuc_led_class nullptr\n");
     return -EIO;
   }
 
