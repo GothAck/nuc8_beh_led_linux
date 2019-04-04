@@ -47,6 +47,13 @@ static const char *colors[NUM_LEDS][NUM_COLORS] = {
   {"off", "blue", "red", "green", "orange", "yellow", "purple", "pink", "white"},
 };
 
+static const char *anims[4] = {
+  "solid",
+  "breathing",
+  "pulsing",
+  "strobing",
+};
+
 static void __iomem *mem_ptr = NULL;
 
 static struct led_classdev nuc_leds[NUM_LEDS];
@@ -239,6 +246,52 @@ static ssize_t nuc_led_color_store(struct device *dev,
   return -EIO;
 }
 
+static ssize_t nuc_led_anim_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface_dev(dev, &iface)) {
+    return -EIO;
+  }
+  const u8 anim = readb(iface.BH) - 1;
+  u8 i;
+  size_t off = 0;
+  for (i = 0; i < (sizeof(anims) / sizeof(anims[0])); i++) {
+    if (!anims[i]) break;
+    off += sprintf(
+      buf + off,
+      "%s%s%s ",
+      WRAP_STR(anim, i, anims));
+  }
+  buf[off - 1] = '\n';
+  return off;
+}
+
+static ssize_t nuc_led_anim_store(struct device *dev,
+                                   struct device_attribute *attr,
+                                   const char *buf, size_t size)
+{
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface_dev(dev, &iface)) {
+    return -EIO;
+  }
+  const u8 anim = readb(iface.BH);
+  int set = -1;
+  u8 i;
+  for (i = 0; i < (sizeof(anims) / sizeof(anims[0])); i++) {
+    if (!anims[i]) break;
+    if (strncmp(anims[i], buf, strlen(anims[i])) == 0) {
+      set = i + 1;
+      break;
+    }
+  }
+  if (set > 0) {
+    writeb(set, iface.BH);
+    return size;
+  }
+  return -EIO;
+}
+
 static ssize_t nuc_led_debug_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
@@ -321,11 +374,13 @@ static ssize_t nuc_led_debug_store(struct device *dev,
 
 static DEVICE_ATTR(state, 0644, nuc_led_state_show, nuc_led_state_store);
 static DEVICE_ATTR(color, 0644, nuc_led_color_show, nuc_led_color_store);
+static DEVICE_ATTR(anim, 0644, nuc_led_anim_show, nuc_led_anim_store);
 static DEVICE_ATTR(debug, 0644, nuc_led_debug_show, nuc_led_debug_store);
 
 static struct attribute *nuc_led_attrs[] = {
         &dev_attr_state.attr,
         &dev_attr_color.attr,
+        &dev_attr_anim.attr,
         &dev_attr_debug.attr,
         NULL
 };
