@@ -33,30 +33,65 @@ const char *debug_keys[] = {
   "BH",
   "FQ",
   "CR",
+  NULL,
 };
 
-static const char *states[NUM_STATES] = {
+static const char *states[] = {
   "power",
   "hdd",
   "sw",
+  NULL,
 };
 
-static const char *colors[NUM_LEDS][NUM_COLORS] = {
-  {"off", "blue", "amber", NULL, NULL, NULL, NULL, NULL, NULL, },
-  {"off", "blue", "red", "green", "orange", "yellow", "purple", "pink", "white"},
-  {"off", "blue", "red", "green", "orange", "yellow", "purple", "pink", "white"},
+static const char *colors_ba[] = {"off", "blue", "amber", NULL};
+static const char *colors_rgb[] = {"off", "blue", "red", "green", "orange", "yellow", "purple", "pink", "white", NULL};
+
+static const char **colors[] = {
+  (const char **)&colors_ba,
+  (const char **)&colors_rgb,
+  (const char **)&colors_rgb,
+  NULL,
 };
 
-static const char *anims[4] = {
+static const char *anims[] = {
   "solid",
   "breathing",
   "pulsing",
   "strobing",
+  NULL,
 };
 
 static void __iomem *mem_ptr = NULL;
 
 static struct led_classdev nuc_leds[NUM_LEDS];
+
+static int get_choice(const char *choices[], const char *buf) {
+  int i = 0;
+  while (choices[i]) {
+    if (!strncmp(choices[i], buf, strlen(choices[i]))) {
+      return i;
+    }
+    i++;
+  }
+  return -1;
+}
+
+static int print_choices(const char *buf, const char *choices[], int index) {
+  int off = 0;
+  int i = 0;
+  while (choices[i]) {
+    off += sprintf(
+      buf + off,
+      "%s%s%s ",
+      i == index ? "[" : "",
+      choices[i],
+      i == index ? "]" : ""
+    );
+    i++;
+  }
+  strcpy(buf + off - 1, "\n");
+  return off;
+}
 
 inline int nuc_led_get_index(struct led_classdev *led_cdev) {
   u8 i;
@@ -173,10 +208,7 @@ static ssize_t nuc_led_state_show(struct device *dev,
     return -EIO;
   }
   int index = iface.status - 1;
-  return sprintf(
-    buf,
-    "%s%s%s %s%s%s %s%s%s\n",
-    STATE_STR(index, 0), STATE_STR(index, 1), STATE_STR(index, 2));
+  return print_choices(buf, states, index);
 }
 
 static ssize_t nuc_led_state_store(struct device *dev,
@@ -187,16 +219,9 @@ static ssize_t nuc_led_state_store(struct device *dev,
   if (nuc_led_get_interface_dev(dev, &iface)) {
     return -EIO;
   }
-  int set = -1;
-  u8 i;
-  for (i = 0; i < NUM_STATES; i++) {
-    if (strncmp(states[i], buf, strlen(states[i])) == 0) {
-      set = i + 1;
-      break;
-    }
-  }
-  if (set <= 0) return -EIO;
-  writeb(set, iface.S);
+  int set = get_choice(states, buf);
+  if (set < 0) return -EIO;
+  writeb(set + 1, iface.S);
   return size;
 }
 
@@ -208,17 +233,7 @@ static ssize_t nuc_led_color_show(struct device *dev,
     return -EIO;
   }
   const u8 color = readb(iface.CR);
-  u8 i;
-  size_t off = 0;
-  for (i = 0; i < NUM_COLORS; i++) {
-    if (!colors[iface.index][i]) break;
-    off += sprintf(
-      buf + off,
-      "%s%s%s ",
-      WRAP_STR(color, i, colors[iface.index]));
-  }
-  buf[off - 1] = '\n';
-  return off;
+  return print_choices(buf, colors[iface.index], color);
 }
 
 static ssize_t nuc_led_color_store(struct device *dev,
@@ -229,21 +244,13 @@ static ssize_t nuc_led_color_store(struct device *dev,
   if (nuc_led_get_interface_dev(dev, &iface)) {
     return -EIO;
   }
-  const u8 color = readb(iface.CR);
-  int set = -1;
-  u8 i;
-  for (i = 0; i < NUM_COLORS; i++) {
-    if (!colors[iface.index][i]) break;
-    if (strncmp(colors[iface.index][i], buf, strlen(colors[iface.index][i])) == 0) {
-      set = i;
-      break;
-    }
-  }
-  if (set > 0) {
-    writeb(set, iface.CR);
-    return size;
-  }
-  return -EIO;
+  int set = get_choice(colors[iface.index], buf);
+
+  if (set < 0)
+    return -EIO;
+
+  writeb(set, iface.CR);
+  return size;
 }
 
 static ssize_t nuc_led_anim_show(struct device *dev,
@@ -254,17 +261,8 @@ static ssize_t nuc_led_anim_show(struct device *dev,
     return -EIO;
   }
   const u8 anim = readb(iface.BH) - 1;
-  u8 i;
-  size_t off = 0;
-  for (i = 0; i < (sizeof(anims) / sizeof(anims[0])); i++) {
-    if (!anims[i]) break;
-    off += sprintf(
-      buf + off,
-      "%s%s%s ",
-      WRAP_STR(anim, i, anims));
-  }
-  buf[off - 1] = '\n';
-  return off;
+
+  return print_choices(buf, anims, anim);
 }
 
 static ssize_t nuc_led_anim_store(struct device *dev,
@@ -275,21 +273,11 @@ static ssize_t nuc_led_anim_store(struct device *dev,
   if (nuc_led_get_interface_dev(dev, &iface)) {
     return -EIO;
   }
-  const u8 anim = readb(iface.BH);
-  int set = -1;
-  u8 i;
-  for (i = 0; i < (sizeof(anims) / sizeof(anims[0])); i++) {
-    if (!anims[i]) break;
-    if (strncmp(anims[i], buf, strlen(anims[i])) == 0) {
-      set = i + 1;
-      break;
-    }
-  }
-  if (set > 0) {
-    writeb(set, iface.BH);
-    return size;
-  }
-  return -EIO;
+  int set = get_choice(anims, buf);
+  if (set < 0)
+    return -EIO;
+  writeb(set, iface.BH + 1);
+  return size;
 }
 
 static ssize_t nuc_led_debug_show(struct device *dev,
@@ -440,10 +428,8 @@ static struct platform_driver nuc_led_class_driver = {
 
 static int __init nuc_led_class_init(void)
 {
-  int ret = -ENODEV;
   if (!wmi_has_guid(NUCLED_WMI_MGMT_GUID)) {
-  ret = -ENODEV;
-  goto out;
+    return -ENODEV;
   }
 
   mem_ptr = ioremap_nocache((void *)ACPI_H2RA, ACPI_H2RL);
@@ -452,29 +438,29 @@ static int __init nuc_led_class_init(void)
     return -EIO;
   }
 
-  ret = platform_driver_register(&nuc_led_class_driver);
-  if (ret < 0) {
-    // iounmap(mem_ptr);
+  if (platform_driver_register(&nuc_led_class_driver) < 0) {
+    iounmap(mem_ptr);
+    mem_ptr = NULL;
     return -ENODEV;
   }
 
   pdev = platform_device_register_simple(DRVNAME, -1, NULL, 0);
   if (IS_ERR(pdev)) {
-  ret = PTR_ERR(pdev);
-  platform_driver_unregister(&nuc_led_class_driver);
-    // iounmap(mem_ptr);
-    return ret;
+    platform_driver_unregister(&nuc_led_class_driver);
+    iounmap(mem_ptr);
+    mem_ptr = NULL;
+    return PTR_ERR(pdev);
   }
 
-out:
-  return ret;
+  return 0;
 }
 
 static void __exit nuc_led_class_exit(void)
 {
   platform_device_unregister(pdev);
   platform_driver_unregister(&nuc_led_class_driver);
-  // iounmap(mem_ptr);
+  mem_ptr = NULL;
+  iounmap(mem_ptr);
 }
 
 module_init(nuc_led_class_init);

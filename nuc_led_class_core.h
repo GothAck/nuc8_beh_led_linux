@@ -1,19 +1,11 @@
 #pragma once
 
 #define DRVNAME "nuc-led-class"
-#define NUCLED_WMI_MGMT_GUID            "8C5DA44C-CDC3-46b3-8619-4E26D34390B7"
+#define NUCLED_WMI_MGMT_GUID "8C5DA44C-CDC3-46b3-8619-4E26D34390B7"
 #define ACPI_H2RA ((void *)0xFE410500)
 #define ACPI_H2RL 0x100
 
 #define NUM_LEDS 3
-#define NUM_STATES 3
-#define NUM_COLORS 9
-
-#define WRAP_STR(INDEX_VAR, INDEX, STR_VAR) \
-  INDEX_VAR == INDEX ? "[" : "", STR_VAR[INDEX], INDEX_VAR == INDEX ? "]" : ""
-
-#define STATE_STR(INDEX_VAR, INDEX) \
-  WRAP_STR(INDEX_VAR, INDEX, states)
 
 struct E2HR_led_normal {
   u8 BN;
