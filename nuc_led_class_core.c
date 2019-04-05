@@ -61,6 +61,20 @@ static const char *anims[] = {
   NULL,
 };
 
+static const char *frequencies[] = {
+  "1 Hz",
+  "0.9 Hz",
+  "0.8 Hz",
+  "0.7 Hz",
+  "0.6 Hz",
+  "0.5 Hz",
+  "0.4 Hz",
+  "0.3 Hz",
+  "0.2 Hz",
+  "0.1 Hz",
+  NULL,
+};
+
 static void __iomem *mem_ptr = NULL;
 
 static struct led_classdev nuc_leds[NUM_LEDS];
@@ -280,6 +294,37 @@ static ssize_t nuc_led_anim_store(struct device *dev,
   return size;
 }
 
+static ssize_t nuc_led_frequency_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface_dev(dev, &iface)) {
+    return -EIO;
+  }
+  if (!iface.FQ)
+    return -ENODEV;
+  const u8 frequency = readb(iface.FQ) - 1;
+
+  return print_choices(buf, frequencies, frequency);
+}
+
+static ssize_t nuc_led_frequency_store(struct device *dev,
+                                   struct device_attribute *attr,
+                                   const char *buf, size_t size)
+{
+  struct nuc_led_interface iface;
+  if (nuc_led_get_interface_dev(dev, &iface)) {
+    return -EIO;
+  }
+  if (!iface.FQ)
+    return -ENODEV;
+  int set = get_choice(frequencies, buf);
+  if (set < 0)
+    return -EIO;
+  writeb(set, iface.FQ);
+  return size;
+}
+
 static ssize_t nuc_led_debug_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
@@ -363,12 +408,14 @@ static ssize_t nuc_led_debug_store(struct device *dev,
 static DEVICE_ATTR(state, 0644, nuc_led_state_show, nuc_led_state_store);
 static DEVICE_ATTR(color, 0644, nuc_led_color_show, nuc_led_color_store);
 static DEVICE_ATTR(anim, 0644, nuc_led_anim_show, nuc_led_anim_store);
+static DEVICE_ATTR(frequency, 0644, nuc_led_frequency_show, nuc_led_frequency_store);
 static DEVICE_ATTR(debug, 0644, nuc_led_debug_show, nuc_led_debug_store);
 
 static struct attribute *nuc_led_attrs[] = {
         &dev_attr_state.attr,
         &dev_attr_color.attr,
         &dev_attr_anim.attr,
+        &dev_attr_frequency.attr,
         &dev_attr_debug.attr,
         NULL
 };
